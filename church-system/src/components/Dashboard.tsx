@@ -3,9 +3,10 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-import { ArrowUpCircle, ArrowDownCircle, Wallet } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Wallet, FileDown } from 'lucide-react';
 import { PALETTE } from '../constants';
 import { fmtBRL, monthLabel } from '../utils';
+import { exportFinanceReportPDF } from '../pdfExport';
 import StatCard from './shared/StatCard';
 import EmptyState from './shared/EmptyState';
 import type { FinanceEntry } from '../types';
@@ -66,22 +67,37 @@ export default function Dashboard({ finance }: DashboardProps) {
     return Object.entries(map).map(([name, value]) => ({ name, value }));
   }, [filtered]);
 
+  const periodLabel = period === 'all' ? 'Todos os períodos' : monthLabel(period);
+
+  const handleExportPDF = () => {
+    exportFinanceReportPDF(filtered, periodLabel);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h2 style={{ fontFamily: "'Fraunces', serif" }} className="text-2xl text-[#1B2A4A]">
           Painel financeiro
         </h2>
-        <select
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          className="text-sm border border-[#1B2A4A]/15 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
-        >
-          <option value="all">Todos os períodos</option>
-          {months.map((m) => (
-            <option key={m} value={m}>{monthLabel(m)}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2 flex-wrap">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="text-sm border border-[#1B2A4A]/15 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
+          >
+            <option value="all">Todos os períodos</option>
+            {months.map((m) => (
+              <option key={m} value={m}>{monthLabel(m)}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleExportPDF}
+            disabled={filtered.length === 0}
+            className="flex items-center gap-1.5 bg-[#1B2A4A] hover:bg-[#34456B] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg px-3 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
+          >
+            <FileDown size={16} /> Exportar PDF
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
