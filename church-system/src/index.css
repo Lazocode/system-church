@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-5px); }
+  40%, 60% { transform: translateX(5px); }
+}
+
+.input {
+  width: 100%;
+  border: 1px solid #1b2a4a26;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  background: white;
+}
+.input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #b8863b;
+}
