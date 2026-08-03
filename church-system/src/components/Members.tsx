@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, FileDown } from 'lucide-react';
 import { MINISTRIES } from '../constants';
 import { uid } from '../utils';
+import { exportMembersReportPDF } from '../pdfExport';
 import EmptyState from './shared/EmptyState';
 import MemberForm from './MemberForm';
 import type { Member } from '../types';
@@ -39,18 +40,36 @@ export default function Members({ members, setMembers }: MembersProps) {
     setConfirmDelete(null);
   };
 
+  const filterLabel =
+    ministryFilter === 'all' && !search
+      ? 'Todos os membros'
+      : `${ministryFilter === 'all' ? 'Todos os ministérios' : ministryFilter}${search ? ` · busca "${search}"` : ''}`;
+
+  const handleExportPDF = () => {
+    exportMembersReportPDF(filtered, filterLabel);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h2 style={{ fontFamily: "'Fraunces', serif" }} className="text-2xl text-[#1B2A4A]">
           Membros ({members.length})
         </h2>
-        <button
-          onClick={() => { setEditing(null); setShowForm(true); }}
-          className="flex items-center gap-1.5 bg-[#B8863B] hover:bg-[#a3782f] text-[#1B2A4A] font-medium text-sm rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]"
-        >
-          <Plus size={16} /> Novo membro
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportPDF}
+            disabled={filtered.length === 0}
+            className="flex items-center gap-1.5 bg-[#1B2A4A] hover:bg-[#34456B] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
+          >
+            <FileDown size={16} /> Exportar PDF
+          </button>
+          <button
+            onClick={() => { setEditing(null); setShowForm(true); }}
+            className="flex items-center gap-1.5 bg-[#B8863B] hover:bg-[#a3782f] text-[#1B2A4A] font-medium text-sm rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]"
+          >
+            <Plus size={16} /> Novo membro
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-5">

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { FinanceEntry } from './types';
+import type { FinanceEntry, Member } from './types';
 import { fmtBRL } from './utils';
 
 export function exportFinanceReportPDF(entries: FinanceEntry[], periodLabel: string) {
@@ -56,4 +56,43 @@ export function exportFinanceReportPDF(entries: FinanceEntry[], periodLabel: str
 
   const safeLabel = periodLabel.replace(/[/\\]/g, '-').replace(/\s+/g, '-').toLowerCase();
   doc.save(`relatorio-financeiro-${safeLabel}.pdf`);
+}
+
+export function exportMembersReportPDF(members: Member[], filterLabel: string) {
+  const doc = new jsPDF();
+  const sorted = [...members].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+
+  doc.setFontSize(16);
+  doc.setTextColor(27, 42, 74);
+  doc.text('Lista de Membros', 14, 18);
+
+  doc.setFontSize(11);
+  doc.setTextColor(100);
+  doc.text(`Filtro: ${filterLabel}`, 14, 26);
+  doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 32);
+  doc.text(`Total: ${sorted.length} membro${sorted.length === 1 ? '' : 's'}`, 14, 38);
+
+  autoTable(doc, {
+    startY: 46,
+    head: [['Nome', 'Contato', 'Ministério', 'Nascimento', 'E-mail', 'Endereço']],
+    body: sorted.map((m) => [
+      m.name,
+      m.phone || '—',
+      m.ministry || '—',
+      m.birthdate ? new Date(m.birthdate + 'T00:00:00').toLocaleDateString('pt-BR') : '—',
+      m.email || '—',
+      m.address || '—',
+    ]),
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [27, 42, 74] },
+  });
+
+  if (sorted.length === 0) {
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text('Nenhum membro encontrado.', 14, 54);
+  }
+
+  const safeLabel = filterLabel.replace(/[/\\]/g, '-').replace(/\s+/g, '-').toLowerCase();
+  doc.save(`lista-membros-${safeLabel}.pdf`);
 }
