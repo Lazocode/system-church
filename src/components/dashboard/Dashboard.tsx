@@ -1,3 +1,15 @@
+/**
+ * ============================================================================
+ * PAINEL ANALÍTICO / DASHBOARD FINANCEIRO
+ * ============================================================================
+ * Centraliza as métricas analíticas e visuais da saúde financeira da congregação:
+ * - Indicadores-chave (KPIs): Total de Entradas, Total de Saídas e Saldo Líquido.
+ * - Gráfico de Barras (Recharts): Comparativo mensal de Entradas vs Saídas.
+ * - Gráfico de Rosca / Pizza (Recharts): Distribuição de despesas por categoria.
+ * - Filtro dinâmico por período (mês específico ou histórico consolidado).
+ * - Exportação de relatório contábil em PDF através do `exportFinanceReportPDF`.
+ */
+
 import { useMemo, useState } from 'react';
 import {
   BarChart,
@@ -19,6 +31,7 @@ import { exportFinanceReportPDF } from '../../utils/pdfExport';
 import StatCard from '../shared/StatCard';
 import EmptyState from '../shared/EmptyState';
 import type { FinanceEntry } from '../../types/types';
+
 // ==========================================
 // INTERFACES & TIPAGENS
 // ==========================================
@@ -35,7 +48,7 @@ interface MonthlyDatum {
   entradas: number;
   /** Soma das saídas no mês */
   saidas: number;
-  /** Rótulo formatado para exibição visual (ex: "Jan/2026") */
+  /** Rótulo formatado para exibição visual (ex: "Jan/26") */
   label: string;
 }
 
@@ -45,6 +58,7 @@ interface CategoryDatum {
   /** Valor total gasto na categoria */
   value: number;
 }
+
 
 // ==========================================
 // COMPONENTE PRINCIPAL

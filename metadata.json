@@ -1,0 +1,6 @@
+{
+  "name": "Sistema da Igreja",
+  "description": "Sistema de gestão de membros e finanças para igrejas",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

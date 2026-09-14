@@ -1,31 +1,63 @@
+/**
+ * ============================================================================
+ * MÓDULO DE GESTÃO DE MEMBROS (MEMBERS VIEW)
+ * ============================================================================
+ * Esta tela permite a administração completa dos membros da igreja:
+ * - Listagem tabular responsiva dos membros cadastrados.
+ * - Busca textual dinâmica em tempo real (filtrando por nome).
+ * - Filtro por departamento ou ministério (Louvor, Infantil, Jovens, etc.).
+ * - Cadastro e edição por meio do modal `MemberForm`.
+ * - Exclusão com confirmação em duas etapas para evitar perdas acidentais.
+ * - Exportação da lista filtrada para documento PDF estruturado.
+ */
+
 import { useState } from 'react';
 import { Plus, Search, Pencil, Trash2, FileDown } from 'lucide-react';
 import { MINISTRIES } from '../../constants/constants';
 import { uid } from '../../utils/utils';
-import { exportMembersReportPDF } from '../../utils/pdfExport'
+import { exportMembersReportPDF } from '../../utils/pdfExport';
 import EmptyState from '../shared/EmptyState';
-import MemberForm from '../forms/MemberForm';
+import MemberForm, { type MemberFormData } from '../forms/MemberForm';
 import type { Member } from '../../types/types';
 
+/**
+ * Propriedades do componente Members.
+ */
 interface MembersProps {
+  /** Lista completa dos membros em memória */
   members: Member[];
+  /** Callback para atualização da lista de membros */
   setMembers: (next: Member[]) => void;
 }
 
+/**
+ * Componente da página de membros.
+ */
 export default function Members({ members, setMembers }: MembersProps) {
+  // Controle de visibilidade do modal de formulário
   const [showForm, setShowForm] = useState(false);
+  // Membro selecionado para edição (ou null se for novo cadastro)
   const [editing, setEditing] = useState<Member | null>(null);
+  // Termo de busca textual por nome
   const [search, setSearch] = useState('');
+  // Ministério selecionado no filtro ('all' para todos)
   const [ministryFilter, setMinistryFilter] = useState('all');
+  // ID do membro que está aguardando confirmação de exclusão
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
+  /**
+   * Filtra membros com base no termo de busca e ministério selecionado.
+   */
   const filtered = members.filter(
     (m) =>
       m.name.toLowerCase().includes(search.toLowerCase()) &&
       (ministryFilter === 'all' || m.ministry === ministryFilter)
   );
 
-  const saveMember = (data: Omit<Member, 'id'>) => {
+  /**
+   * Salva um membro (novo ou editado).
+   */
+  const saveMember = (data: MemberFormData) => {
     if (editing) {
       setMembers(members.map((m) => (m.id === editing.id ? { ...data, id: editing.id } : m)));
     } else {
@@ -35,101 +67,148 @@ export default function Members({ members, setMembers }: MembersProps) {
     setEditing(null);
   };
 
+  /**
+   * Remove um membro após a confirmação do usuário.
+   */
   const removeMember = (id: string) => {
     setMembers(members.filter((m) => m.id !== id));
     setConfirmDelete(null);
   };
 
+  // Monta o rótulo descritivo do filtro atual para inserção no cabeçalho do PDF
   const filterLabel =
     ministryFilter === 'all' && !search
       ? 'Todos os membros'
       : `${ministryFilter === 'all' ? 'Todos os ministérios' : ministryFilter}${search ? ` · busca "${search}"` : ''}`;
 
+  /**
+   * Dispara a geração e download do relatório PDF.
+   */
   const handleExportPDF = () => {
     exportMembersReportPDF(filtered, filterLabel);
   };
 
   return (
     <div>
+      {/* Cabeçalho da página com contador e botões de ação */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h2 style={{ fontFamily: "'Fraunces', serif" }} className="text-2xl text-[#1B2A4A]">
+        <h2 style={{ fontFamily: "'Fraunces', serif" }} className="text-2xl font-semibold text-[#1B2A4A]">
           Membros ({members.length})
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={handleExportPDF}
             disabled={filtered.length === 0}
-            className="flex items-center gap-1.5 bg-[#1B2A4A] hover:bg-[#34456B] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
+            className="flex items-center gap-2 bg-[#1B2A4A] hover:bg-[#34456B] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#B8863B] shadow-sm"
+            title="Exportar listagem atual para PDF"
           >
             <FileDown size={16} /> Exportar PDF
           </button>
           <button
-            onClick={() => { setEditing(null); setShowForm(true); }}
-            className="flex items-center gap-1.5 bg-[#B8863B] hover:bg-[#a3782f] text-[#1B2A4A] font-medium text-sm rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]"
+            onClick={() => {
+              setEditing(null);
+              setShowForm(true);
+            }}
+            className="flex items-center gap-1.5 bg-[#B8863B] hover:bg-[#a3782f] text-[#1B2A4A] font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] shadow-sm"
           >
-            <Plus size={16} /> Novo membro
+            <Plus size={16} /> Novo Membro
           </button>
         </div>
       </div>
 
+      {/* Barra de Filtros e Busca */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6B63]" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nome…"
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#1B2A4A]/15 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
+            placeholder="Buscar membro por nome…"
+            className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-[#1B2A4A]/15 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
           />
         </div>
         <select
           value={ministryFilter}
           onChange={(e) => setMinistryFilter(e.target.value)}
-          className="text-sm border border-[#1B2A4A]/15 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
+          className="text-sm border border-[#1B2A4A]/15 rounded-lg px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
         >
           <option value="all">Todos os ministérios</option>
           {MINISTRIES.map((m) => (
-            <option key={m} value={m}>{m}</option>
+            <option key={m} value={m}>
+              {m}
+            </option>
           ))}
         </select>
       </div>
 
+      {/* Tabela de Membros ou Estado Vazio */}
       {filtered.length === 0 ? (
-        <EmptyState text={members.length === 0 ? 'Nenhum membro cadastrado ainda.' : 'Nenhum membro encontrado com esse filtro.'} />
+        <EmptyState
+          text={
+            members.length === 0
+              ? 'Nenhum membro cadastrado ainda.'
+              : 'Nenhum membro encontrado com os filtros selecionados.'
+          }
+        />
       ) : (
-        <div className="bg-white rounded-xl border border-[#1B2A4A]/10 overflow-hidden overflow-x-auto">
+        <div className="bg-white rounded-xl border border-[#1B2A4A]/10 overflow-hidden overflow-x-auto shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-[#6B6B63] border-b border-[#1B2A4A]/10">
-                <th className="px-4 py-3">Nome</th>
-                <th className="px-4 py-3 hidden md:table-cell">Contato</th>
-                <th className="px-4 py-3 hidden lg:table-cell">Ministério</th>
-                <th className="px-4 py-3 w-24"></th>
+              <tr className="text-left text-xs uppercase tracking-wide text-[#6B6B63] bg-[#F7F3EA]/50 border-b border-[#1B2A4A]/10">
+                <th className="px-4 py-3 font-semibold">Nome</th>
+                <th className="px-4 py-3 hidden md:table-cell font-semibold">Contato</th>
+                <th className="px-4 py-3 hidden lg:table-cell font-semibold">Ministério</th>
+                <th className="px-4 py-3 w-28 text-right font-semibold">Ações</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((m) => (
-                <tr key={m.id} className="border-b border-[#1B2A4A]/5 last:border-0">
+                <tr key={m.id} className="border-b border-[#1B2A4A]/5 last:border-0 hover:bg-[#F7F3EA]/30 transition-colors">
                   <td className="px-4 py-3 font-medium text-[#1B2A4A]">{m.name}</td>
-                  <td className="px-4 py-3 hidden md:table-cell text-[#6B6B63]">{m.phone || m.email || '—'}</td>
-                  <td className="px-4 py-3 hidden lg:table-cell text-[#6B6B63]">{m.ministry || '—'}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 hidden md:table-cell text-[#6B6B63]">
+                    {m.phone || m.email || '—'}
+                  </td>
+                  <td className="px-4 py-3 hidden lg:table-cell text-[#6B6B63]">
+                    {m.ministry ? (
+                      <span className="inline-block px-2 py-0.5 rounded text-xs bg-[#1B2A4A]/5 text-[#1B2A4A] font-medium">
+                        {m.ministry}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
                     {confirmDelete === m.id ? (
-                      <div className="flex gap-2 justify-end">
-                        <button onClick={() => removeMember(m.id)} className="text-xs text-[#A6432D] font-medium">Confirmar</button>
-                        <button onClick={() => setConfirmDelete(null)} className="text-xs text-[#6B6B63]">Cancelar</button>
+                      <div className="flex gap-2 justify-end items-center">
+                        <button
+                          onClick={() => removeMember(m.id)}
+                          className="text-xs text-[#A6432D] hover:underline font-semibold"
+                        >
+                          Excluir
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(null)}
+                          className="text-xs text-[#6B6B63] hover:underline"
+                        >
+                          Cancelar
+                        </button>
                       </div>
                     ) : (
-                      <div className="flex gap-2 justify-end">
+                      <div className="flex gap-1.5 justify-end items-center">
                         <button
-                          onClick={() => { setEditing(m); setShowForm(true); }}
-                          className="p-1.5 rounded hover:bg-[#1B2A4A]/5 text-[#1B2A4A] focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
+                          onClick={() => {
+                            setEditing(m);
+                            setShowForm(true);
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-[#1B2A4A]/5 text-[#1B2A4A] focus:outline-none focus:ring-2 focus:ring-[#B8863B] transition-colors"
+                          title="Editar cadastro"
                         >
                           <Pencil size={15} />
                         </button>
                         <button
                           onClick={() => setConfirmDelete(m.id)}
-                          className="p-1.5 rounded hover:bg-[#A6432D]/10 text-[#A6432D] focus:outline-none focus:ring-2 focus:ring-[#B8863B]"
+                          className="p-1.5 rounded-lg hover:bg-[#A6432D]/10 text-[#A6432D] focus:outline-none focus:ring-2 focus:ring-[#B8863B] transition-colors"
+                          title="Excluir membro"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -143,9 +222,18 @@ export default function Members({ members, setMembers }: MembersProps) {
         </div>
       )}
 
+      {/* Modal de Formulário */}
       {showForm && (
-        <MemberForm initial={editing} onCancel={() => { setShowForm(false); setEditing(null); }} onSave={saveMember} />
+        <MemberForm
+          initial={editing}
+          onCancel={() => {
+            setShowForm(false);
+            setEditing(null);
+          }}
+          onSave={saveMember}
+        />
       )}
     </div>
   );
 }
+
