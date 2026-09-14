@@ -8,7 +8,7 @@
 // .env.example) com a URL e a chave do seu projeto Supabase.
 // ---------------------------------------------------------------------------
 
-import { supabase } from './supabaseClient';
+import { supabase } from '../libs/supabaseClient';
 
 const TABLE_MAP: Record<string, string> = {
   'church-members': 'members',

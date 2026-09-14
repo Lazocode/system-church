@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback} from 'react';
 import { Loader2 } from 'lucide-react';
-import { getData, setData } from './storage';
-import Login from './components/Login';
-import Sidebar from './components/Sidebar';
-import TopBar from './components/TopBar';
-import Dashboard from './components/Dashboard';
-import Members from './components/Members';
-import Finance from './components/Finance';
-import type { Member, FinanceEntry, Role } from './types';
+import { getData, setData } from './services/storage';
+import Login from './components/shared/Login'; // Ajuste se o Login estiver em outra pasta
+import Sidebar from './components/layout/Sidebar';
+import TopBar from './components/layout/TopBar';
+import Dashboard from './components/dashboard/Dashboard';
+import Members from './components/shared/Members'; // Ajuste a pasta se não estiver em 'shared'
+import Finance from './components/shared/Finance'; // Ajuste a pasta se não estiver em 'shared'
+import type { Member, FinanceEntry, Role } from './types/types';
 
 type Page = 'dashboard' | 'members' | 'finance';
 

@@ -1,5 +1,5 @@
 import { Church, Users, Wallet, LogOut, LayoutDashboard, type LucideIcon } from 'lucide-react';
-import type { Role } from '../types';
+import type { Role } from '../../types/types';
 
 type Page = 'dashboard' | 'members' | 'finance';
 

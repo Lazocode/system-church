@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { fmtBRL, uid } from '../utils';
-import EmptyState from './shared/EmptyState';
-import FinanceForm from './FinanceForm';
-import type { FinanceEntry } from '../types';
+import { fmtBRL, uid } from '../../utils/utils';
+import EmptyState from '../shared/EmptyState';
+import FinanceForm from '../forms/FinanceForm';
+import type { FinanceEntry } from '../../types/types';
 
 interface FinanceProps {
   finance: FinanceEntry[];

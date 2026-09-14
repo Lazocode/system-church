@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { FinanceEntry, Member } from './types';
+import type { FinanceEntry, Member } from '../types/types';
 import { fmtBRL } from './utils';
 
 export function exportFinanceReportPDF(entries: FinanceEntry[], periodLabel: string) {

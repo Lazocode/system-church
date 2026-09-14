@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Plus, Search, Pencil, Trash2, FileDown } from 'lucide-react';
-import { MINISTRIES } from '../constants';
-import { uid } from '../utils';
-import { exportMembersReportPDF } from '../pdfExport';
-import EmptyState from './shared/EmptyState';
-import MemberForm from './MemberForm';
-import type { Member } from '../types';
+import { MINISTRIES } from '../../constants/constants';
+import { uid } from '../../utils/utils';
+import { exportMembersReportPDF } from '../../utils/pdfExport'
+import EmptyState from '../shared/EmptyState';
+import MemberForm from '../forms/MemberForm';
+import type { Member } from '../../types/types';
 
 interface MembersProps {
   members: Member[];

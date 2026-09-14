@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Church, Lock } from 'lucide-react';
-import { ACCESS_CODES } from '../constants';
-import type { Role } from '../types';
+import { ACCESS_CODES } from '../../constants/constants';
+import type { Role } from '../../types/types';
 
 interface LoginProps {
   onLogin: (role: Role) => void;
