@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { MINISTRIES } from '../constants';
-import Field from './shared/Field';
-import type { Member } from '../types';
+import { MINISTRIES } from '../../constants/constants';
+import Field from '../shared/Field';
+import type { Member } from '../../../src/types/types';
 
 type MemberFormData = Omit<Member, 'id'>;
 

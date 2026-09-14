@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../constants';
-import Field from './shared/Field';
-import type { FinanceEntry, FinanceType } from '../types';
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../../constants/constants';
+import Field from '../shared/Field';
+import type { FinanceEntry, FinanceType } from '../../../src/types/types';
 
 interface FinanceFormProps {
   onCancel: () => void;
