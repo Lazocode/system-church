@@ -12,7 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { X, ArrowUpCircle, ArrowDownCircle, Wallet, FileDown } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Wallet, FileDown } from 'lucide-react';
 import { PALETTE } from '../../constants/constants';
 import { fmtBRL, monthLabel } from '../../utils/utils';
 import { exportFinanceReportPDF } from '../../utils/pdfExport';
