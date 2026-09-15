@@ -26,7 +26,7 @@ import {
 } from 'recharts';
 import { ArrowUpCircle, ArrowDownCircle, Wallet, FileDown } from 'lucide-react';
 import { PALETTE } from '../../constants/constants';
-import { fmtBRL, monthLabel } from '../../utils/utils';
+import { fmtBRL, monthLabel, fullMonthLabel } from '../../utils/utils';
 import { exportFinanceReportPDF } from '../../utils/pdfExport';
 import StatCard from '../shared/StatCard';
 import EmptyState from '../shared/EmptyState';
@@ -134,21 +134,47 @@ export default function Dashboard({ finance }: DashboardProps) {
         map[f.category] = (map[f.category] || 0) + Number(f.amount);
       });
 
-    return Object.entries(map).map(([name, value]) => ({ name, value }));
+    return Object.entries(map)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [filtered]);
+
+  /**
+   * Agrupa as entradas por categoria para demonstrativo analítico de receitas.
+   */
+  const incomeByCategory: CategoryDatum[] = useMemo(() => {
+    const map: Record<string, number> = {};
+
+    filtered
+      .filter((f) => f.type === 'entrada')
+      .forEach((f) => {
+        map[f.category] = (map[f.category] || 0) + Number(f.amount);
+      });
+
+    return Object.entries(map)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
   }, [filtered]);
 
   // Texto formatado do período para exibição em títulos e no relatório PDF
-  const periodLabel = period === 'all' ? 'Todos os períodos' : monthLabel(period);
+  const periodLabel = period === 'all' ? 'Todos os períodos' : fullMonthLabel(period);
 
   // ------------------------------------------
   // HANDLERS / AÇÕES DO USUÁRIO
   // ------------------------------------------
 
   /**
-   * Dispara a geração e o download do relatório em PDF dos lançamentos filtrados.
+   * Dispara a geração e o download do relatório analítico em PDF dos lançamentos filtrados
+   * com gráficos integrados, indicadores e demonstrativo contábil.
    */
   const handleExportPDF = () => {
-    exportFinanceReportPDF(filtered, periodLabel);
+    exportFinanceReportPDF(filtered, periodLabel, {
+      periodKey: period,
+      allFinance: finance,
+      monthlyData,
+      expenseByCategory,
+      incomeByCategory,
+    });
   };
 
   // ------------------------------------------

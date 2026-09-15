@@ -33,6 +33,33 @@ export const monthLabel = (ym: string): string => {
 };
 
 /**
+ * Converte uma chave de ano/mês no formato "AAAA-MM" para o nome completo do mês e ano.
+ * Exemplo: "2026-03" -> "Março de 2026"
+ *
+ * @param ym String no formato "AAAA-MM"
+ * @returns Rótulo completo em português
+ */
+export const fullMonthLabel = (ym: string): string => {
+  const [y, m] = ym.split('-');
+  const names = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
+  ];
+  const idx = parseInt(m, 10) - 1;
+  return `${names[idx] || m} de ${y}`;
+};
+
+/**
  * Gera um identificador único pseudo-aleatório de 8 caracteres alfanuméricos.
  * Útil para novos registros criados localmente antes da persistência definitiva.
  *

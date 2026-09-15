@@ -13,8 +13,9 @@
  */
 
 import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, FileDown } from 'lucide-react';
 import { fmtBRL, uid } from '../../utils/utils';
+import { exportFinanceReportPDF } from '../../utils/pdfExport';
 import EmptyState from '../shared/EmptyState';
 import FinanceForm from '../forms/FinanceForm';
 import type { FinanceEntry } from '../../types/types';
@@ -59,17 +60,26 @@ export default function Finance({ finance, setFinance }: FinanceProps) {
 
   return (
     <div>
-      {/* Cabeçalho da página e botão de novo lançamento */}
+      {/* Cabeçalho da página e botões de ação */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h2 style={{ fontFamily: "'Fraunces', serif" }} className="text-2xl font-semibold text-[#1B2A4A]">
           Lançamentos Financeiros ({finance.length})
         </h2>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 bg-[#B8863B] hover:bg-[#a3782f] text-[#1B2A4A] font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] shadow-sm"
-        >
-          <Plus size={16} /> Novo Lançamento
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportFinanceReportPDF(finance, 'Geral - Todos os Lançamentos', { allFinance: finance })}
+            className="flex items-center gap-1.5 bg-[#FAF7F2] hover:bg-[#EFE9DF] text-[#1B2A4A] border border-[#1B2A4A]/20 font-medium text-sm rounded-lg px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] shadow-xs"
+            title="Exportar balancete completo com gráficos em PDF"
+          >
+            <FileDown size={16} /> Exportar PDF
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-1.5 bg-[#B8863B] hover:bg-[#a3782f] text-[#1B2A4A] font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] shadow-sm"
+          >
+            <Plus size={16} /> Novo Lançamento
+          </button>
+        </div>
       </div>
 
       {/* Tabela do livro-caixa ou estado vazio */}
