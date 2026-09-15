@@ -111,27 +111,6 @@ export default function Login({ onLogin }: LoginProps) {
         >
           Entrar
         </button>
-
-        {/* Atalhos rápidos para testes e demonstração */}
-        <div className="mt-6 pt-4 border-t border-[#1B2A4A]/10 text-center">
-          <p className="text-xs text-[#6B6B63] mb-2 font-medium">Acesso rápido para demonstração:</p>
-          <div className="flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => onLogin('admin')}
-              className="text-xs bg-[#1B2A4A]/10 hover:bg-[#1B2A4A]/20 text-[#1B2A4A] px-2.5 py-1.5 rounded font-medium transition-colors"
-            >
-              Entrar como Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => onLogin('tesouraria')}
-              className="text-xs bg-[#B8863B]/20 hover:bg-[#B8863B]/30 text-[#8A5F1E] px-2.5 py-1.5 rounded font-medium transition-colors"
-            >
-              Entrar como Tesouraria
-            </button>
-          </div>
-        </div>
       </form>
     </div>
   );
