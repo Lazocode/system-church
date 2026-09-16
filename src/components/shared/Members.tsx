@@ -12,7 +12,7 @@
  */
 
 import { useState } from 'react';
-import { Plus, Search, Pencil, Trash2, FileDown } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, FileDown, Users, Award, Cake, Phone } from 'lucide-react';
 import { MINISTRIES } from '../../constants/constants';
 import { uid } from '../../utils/utils';
 import { exportMembersReportPDF } from '../../utils/pdfExport';
@@ -81,38 +81,108 @@ export default function Members({ members, setMembers }: MembersProps) {
       ? 'Todos os membros'
       : `${ministryFilter === 'all' ? 'Todos os ministérios' : ministryFilter}${search ? ` · busca "${search}"` : ''}`;
 
+  // Métricas rápidas para autoexplicação do rol de membresia
+  const totalCount = members.length;
+  const withMinistryCount = members.filter(
+    (m) => m.ministry && m.ministry !== 'Nenhum' && m.ministry.trim() !== ''
+  ).length;
+  const currentMonth = new Date().getMonth() + 1;
+  const birthdaysThisMonthCount = members.filter(
+    (m) => m.birthdate && Number(m.birthdate.slice(5, 7)) === currentMonth
+  ).length;
+  const withPhoneCount = members.filter(
+    (m) => m.phone && m.phone.trim().length >= 4
+  ).length;
+
   /**
-   * Dispara a geração e download do relatório PDF.
+   * Dispara a geração e download do relatório PDF com gráficos e indicadores.
    */
   const handleExportPDF = () => {
-    exportMembersReportPDF(filtered, filterLabel);
+    exportMembersReportPDF(filtered, filterLabel, { allMembers: members });
   };
 
   return (
     <div>
       {/* Cabeçalho da página com contador e botões de ação */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h2 style={{ fontFamily: "'Fraunces', serif" }} className="text-2xl font-semibold text-[#1B2A4A]">
-          Membros ({members.length})
-        </h2>
+        <div>
+          <h2 style={{ fontFamily: "'Fraunces', serif" }} className="text-2xl font-semibold text-[#1B2A4A]">
+            Rol de Membros
+          </h2>
+          <p className="text-xs text-[#6B6B63] mt-0.5">
+            Cadastro geral, ministérios e registros eclesiásticos da congregação
+          </p>
+        </div>
         <div className="flex items-center gap-2.5">
           <button
             onClick={handleExportPDF}
             disabled={filtered.length === 0}
-            className="flex items-center gap-2 bg-[#1B2A4A] hover:bg-[#34456B] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#B8863B] shadow-sm"
-            title="Exportar listagem atual para PDF"
+            className="flex items-center gap-2 bg-[#1B2A4A] hover:bg-[#283C66] active:bg-[#142038] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm rounded-lg px-4 py-2.5 transition-all focus:outline-none focus:ring-2 focus:ring-[#B8863B] shadow-sm hover:shadow"
+            title="Exportar relatório eclesiástico completo em PDF (com gráficos e estatísticas)"
           >
-            <FileDown size={16} /> Exportar PDF
+            <FileDown size={16} className="text-[#B8863B]" />
+            <span>Exportar Relatório PDF</span>
           </button>
           <button
             onClick={() => {
               setEditing(null);
               setShowForm(true);
             }}
-            className="flex items-center gap-1.5 bg-[#B8863B] hover:bg-[#a3782f] text-[#1B2A4A] font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] shadow-sm"
+            className="flex items-center gap-1.5 bg-[#B8863B] hover:bg-[#a3782f] active:bg-[#8f6825] text-[#1B2A4A] font-semibold text-sm rounded-lg px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] shadow-sm"
           >
             <Plus size={16} /> Novo Membro
           </button>
+        </div>
+      </div>
+
+      {/* Faixa de Indicadores Rápidos (Autoexplicativo) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
+        <div className="bg-[#FAF8F5] border border-[#1B2A4A]/10 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center justify-between text-[#6B6B63] mb-1.5">
+            <span className="text-xs font-medium uppercase tracking-wider">Membros no Rol</span>
+            <Users size={16} className="text-[#1B2A4A]" />
+          </div>
+          <div className="text-xl font-bold text-[#1B2A4A]">{totalCount}</div>
+          <p className="text-[11px] text-[#6B6B63] mt-0.5">
+            {filtered.length !== totalCount ? `${filtered.length} visíveis no filtro` : 'Congregação ativa'}
+          </p>
+        </div>
+
+        <div className="bg-[#FAF8F5] border border-[#1B2A4A]/10 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center justify-between text-[#6B6B63] mb-1.5">
+            <span className="text-xs font-medium uppercase tracking-wider">Em Ministérios</span>
+            <Award size={16} className="text-[#B8863B]" />
+          </div>
+          <div className="text-xl font-bold text-[#1B2A4A]">
+            {withMinistryCount}{' '}
+            <span className="text-xs font-normal text-[#6B6B63]">
+              ({totalCount > 0 ? Math.round((withMinistryCount / totalCount) * 100) : 0}%)
+            </span>
+          </div>
+          <p className="text-[11px] text-[#6B6B63] mt-0.5">Atuando em departamentos</p>
+        </div>
+
+        <div className="bg-[#FAF8F5] border border-[#1B2A4A]/10 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center justify-between text-[#6B6B63] mb-1.5">
+            <span className="text-xs font-medium uppercase tracking-wider">Aniversariantes</span>
+            <Cake size={16} className="text-[#4B6656]" />
+          </div>
+          <div className="text-xl font-bold text-[#4B6656]">{birthdaysThisMonthCount}</div>
+          <p className="text-[11px] text-[#6B6B63] mt-0.5">Comemorando este mês</p>
+        </div>
+
+        <div className="bg-[#FAF8F5] border border-[#1B2A4A]/10 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center justify-between text-[#6B6B63] mb-1.5">
+            <span className="text-xs font-medium uppercase tracking-wider">Contato Ativo</span>
+            <Phone size={16} className="text-[#A6432D]" />
+          </div>
+          <div className="text-xl font-bold text-[#1B2A4A]">
+            {withPhoneCount}{' '}
+            <span className="text-xs font-normal text-[#6B6B63]">
+              ({totalCount > 0 ? Math.round((withPhoneCount / totalCount) * 100) : 0}%)
+            </span>
+          </div>
+          <p className="text-[11px] text-[#6B6B63] mt-0.5">Com celular / WhatsApp</p>
         </div>
       </div>
 

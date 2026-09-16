@@ -13,7 +13,7 @@
  * - Em telas médias em diante (desktop), exibe ícones e rótulos textuais (md:w-56).
  */
 
-import { Church, Users, Wallet, LogOut, LayoutDashboard, type LucideIcon } from 'lucide-react';
+import { Users, Wallet, LogOut, LayoutDashboard, type LucideIcon } from 'lucide-react';
 import type { Role } from '../../types/types';
 
 /** Tipos de telas navegáveis */
