@@ -58,7 +58,6 @@ export default function Sidebar({ role, page, setPage, onLogout }: SidebarProps)
     <aside className="w-16 md:w-56 shrink-0 bg-[#1B2A4A] text-white flex flex-col min-h-screen select-none">
       {/* Logotipo / Sigla da congregação */}
       <div className="flex items-center gap-2 px-3 md:px-5 py-5 border-b border-white/10">
-        <Church size={20} className="text-[#B8863B] shrink-0" />
         <span style={{ fontFamily: "'Fraunces', serif" }} className="hidden md:inline text-lg font-semibold tracking-wide">
           IECVK
         </span>
