@@ -834,268 +834,19 @@ export function exportFinanceReportPDF(
 }
 
 /**
- * Renderiza em um Canvas HTML5 off-screen os gráficos analíticos de membresia
- * em alta resolução (2x Retina / Print quality) para inserção direta no PDF:
- * 1. Gráfico de barras horizontais com a distribuição por Ministério/Departamento.
- * 2. Gráfico de rosca e indicadores com o Engajamento Ministerial e Comunhão.
+ * Gera e realiza o download do relatório oficial do Rol de Membros em PDF.
+ * Layout institucional limpo, elegante e direto ao ponto: cabeçalho oficial,
+ * barra de metadados, tabela estruturada de membros com contatos e ministérios,
+ * termo de validação da secretaria e rodapé numerado.
  *
- * @returns Data URL em formato PNG da imagem gerada.
- */
-function generateMembersChartsCanvas(
-  ministries: { name: string; count: number; percentage: number }[],
-  stats: {
-    total: number;
-    withMinistry: number;
-    withoutMinistry: number;
-    withPhone: number;
-    withAddress: number;
-    birthdaysThisMonth: number;
-  }
-): string {
-  const canvas = document.createElement('canvas');
-  const width = 1200;
-  const height = 480;
-  canvas.width = width;
-  canvas.height = height;
-
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return '';
-
-  // Fundo branco geral
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, width, height);
-
-  const navyColor = '#1B2A4A';
-  const goldColor = '#B8863B';
-  const greenColor = '#4B6656';
-  const redColor = '#A6432D';
-  const blueColor = '#2C5282';
-  const purpleColor = '#705E7B';
-  const grayText = '#6B6B63';
-  const cardBg = '#FBF9F5';
-  const cardBorder = '#E8E3D9';
-
-  const palette = [navyColor, goldColor, greenColor, redColor, blueColor, purpleColor, '#2A6F68', '#C25E00'];
-
-  // =========================================================================
-  // CARD 1 (ESQUERDA): DISTRIBUIÇÃO POR MINISTÉRIO / DEPARTAMENTO
-  // =========================================================================
-  const card1X = 10;
-  const card1Y = 10;
-  const card1W = 580;
-  const card1H = 460;
-
-  ctx.fillStyle = cardBg;
-  drawRoundedRect(ctx, card1X, card1Y, card1W, card1H, 12);
-  ctx.fill();
-  ctx.strokeStyle = cardBorder;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  ctx.fillStyle = navyColor;
-  ctx.font = 'bold 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillText('Distribuição por Departamento / Ministério', card1X + 24, card1Y + 36);
-
-  ctx.fillStyle = grayText;
-  ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillText('Alocação e engajamento dos membros na congregação', card1X + 24, card1Y + 56);
-
-  const topMinistries = ministries.slice(0, 6);
-  if (topMinistries.length === 0) {
-    ctx.fillStyle = grayText;
-    ctx.font = '14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Nenhum departamento cadastrado.', card1X + card1W / 2, card1Y + card1H / 2);
-    ctx.textAlign = 'left';
-  } else {
-    const listStartY = card1Y + 80;
-    const itemHeight = Math.min(58, (card1H - 100) / topMinistries.length);
-
-    topMinistries.forEach((item, index) => {
-      const itemY = listStartY + index * itemHeight;
-      const color = palette[index % palette.length];
-
-      // Nome do ministério
-      ctx.fillStyle = navyColor;
-      ctx.font = 'bold 13px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(item.name, card1X + 24, itemY + 12);
-
-      // Quantidade e percentual
-      ctx.fillStyle = grayText;
-      ctx.font = 'bold 12px monospace';
-      ctx.textAlign = 'right';
-      ctx.fillText(
-        `${item.count} membro${item.count === 1 ? '' : 's'} (${item.percentage.toFixed(1)}%)`,
-        card1X + card1W - 24,
-        itemY + 12
-      );
-
-      // Fundo da barra
-      ctx.fillStyle = '#EBE7DE';
-      drawRoundedRect(ctx, card1X + 24, itemY + 18, card1W - 48, 11, 5);
-      ctx.fill();
-
-      // Barra colorida proporcional
-      const fillW = Math.max(10, ((card1W - 48) * Math.min(100, item.percentage)) / 100);
-      ctx.fillStyle = color;
-      drawRoundedRect(ctx, card1X + 24, itemY + 18, fillW, 11, 5);
-      ctx.fill();
-    });
-    ctx.textAlign = 'left';
-  }
-
-  // =========================================================================
-  // CARD 2 (DIREITA): ENGAJAMENTO ECLESIÁSTICO & COMUNHÃO
-  // =========================================================================
-  const card2X = 610;
-  const card2Y = 10;
-  const card2W = 580;
-  const card2H = 460;
-
-  ctx.fillStyle = cardBg;
-  drawRoundedRect(ctx, card2X, card2Y, card2W, card2H, 12);
-  ctx.fill();
-  ctx.strokeStyle = cardBorder;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  ctx.fillStyle = navyColor;
-  ctx.font = 'bold 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillText('Engajamento Eclesiástico & Comunhão', card2X + 24, card2Y + 36);
-
-  ctx.fillStyle = grayText;
-  ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillText('Visão geral de atividade e contato para o pastoreio', card2X + 24, card2Y + 56);
-
-  // Gráfico de Rosca Central (Engajados vs Sem Ministério)
-  const donutCenterX = card2X + 130;
-  const donutCenterY = card2Y + 185;
-  const outerRadius = 75;
-  const innerRadius = 48;
-
-  const total = Math.max(stats.total, 1);
-  const engRatio = Math.min(1, stats.withMinistry / total);
-
-  // Arco 1: Com Ministério (Dourado)
-  const angle1 = engRatio * 2 * Math.PI;
-  ctx.beginPath();
-  ctx.arc(donutCenterX, donutCenterY, outerRadius, -Math.PI / 2, -Math.PI / 2 + angle1);
-  ctx.arc(donutCenterX, donutCenterY, innerRadius, -Math.PI / 2 + angle1, -Math.PI / 2, true);
-  ctx.closePath();
-  ctx.fillStyle = goldColor;
-  ctx.fill();
-
-  // Arco 2: Sem Ministério (Cinza)
-  ctx.beginPath();
-  ctx.arc(donutCenterX, donutCenterY, outerRadius, -Math.PI / 2 + angle1, -Math.PI / 2 + 2 * Math.PI);
-  ctx.arc(donutCenterX, donutCenterY, innerRadius, -Math.PI / 2 + 2 * Math.PI, -Math.PI / 2 + angle1, true);
-  ctx.closePath();
-  ctx.fillStyle = '#D6D0C4';
-  ctx.fill();
-
-  // Centro da Rosca: Porcentagem
-  ctx.fillStyle = navyColor;
-  ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.textAlign = 'center';
-  const engPct = (engRatio * 100).toFixed(0);
-  ctx.fillText(`${engPct}%`, donutCenterX, donutCenterY + 4);
-  ctx.font = '9px sans-serif';
-  ctx.fillStyle = grayText;
-  ctx.fillText('ENGAJADOS', donutCenterX, donutCenterY + 18);
-
-  // Legenda lateral ao lado da rosca
-  const legX = card2X + 230;
-  const legY = card2Y + 125;
-
-  // Item 1: Em Ministérios
-  ctx.fillStyle = goldColor;
-  ctx.fillRect(legX, legY, 13, 13);
-  ctx.fillStyle = navyColor;
-  ctx.font = 'bold 12px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('Atuando em Ministérios', legX + 20, legY + 11);
-  ctx.fillStyle = grayText;
-  ctx.font = '11px sans-serif';
-  ctx.fillText(
-    `${stats.withMinistry} membro(s) (${((stats.withMinistry / total) * 100).toFixed(1)}%)`,
-    legX + 20,
-    legY + 26
-  );
-
-  // Item 2: Membros Gerais
-  ctx.fillStyle = '#D6D0C4';
-  ctx.fillRect(legX, legY + 45, 13, 13);
-  ctx.fillStyle = navyColor;
-  ctx.font = 'bold 12px sans-serif';
-  ctx.fillText('Membros Gerais / Apoio', legX + 20, legY + 56);
-  ctx.fillStyle = grayText;
-  ctx.font = '11px sans-serif';
-  ctx.fillText(
-    `${stats.withoutMinistry} membro(s) (${((stats.withoutMinistry / total) * 100).toFixed(1)}%)`,
-    legX + 20,
-    legY + 71
-  );
-
-  // Mini-cards na parte inferior do Card 2
-  const statBoxY = card2Y + 300;
-  const boxWidth = (card2W - 48 - 14) / 2;
-  const boxHeight = 125;
-
-  // Mini Card 1: Cobertura Telefônica / WhatsApp
-  ctx.fillStyle = '#FFFFFF';
-  drawRoundedRect(ctx, card2X + 24, statBoxY, boxWidth, boxHeight, 8);
-  ctx.fill();
-  ctx.strokeStyle = '#E2DDD3';
-  ctx.stroke();
-
-  ctx.fillStyle = greenColor;
-  ctx.font = 'bold 10px sans-serif';
-  ctx.fillText('CONTATO TELEFÔNICO', card2X + 36, statBoxY + 24);
-  ctx.fillStyle = navyColor;
-  ctx.font = 'bold 22px monospace';
-  const phonePct = ((stats.withPhone / total) * 100).toFixed(0);
-  ctx.fillText(`${phonePct}%`, card2X + 36, statBoxY + 56);
-  ctx.fillStyle = grayText;
-  ctx.font = '11px sans-serif';
-  ctx.fillText(`${stats.withPhone} de ${stats.total} com celular`, card2X + 36, statBoxY + 80);
-  ctx.fillText('Apto para avisos e pastoreio', card2X + 36, statBoxY + 98);
-
-  // Mini Card 2: Aniversariantes do Mês
-  ctx.fillStyle = '#FFFFFF';
-  drawRoundedRect(ctx, card2X + 24 + boxWidth + 14, statBoxY, boxWidth, boxHeight, 8);
-  ctx.fill();
-  ctx.strokeStyle = '#E2DDD3';
-  ctx.stroke();
-
-  ctx.fillStyle = redColor;
-  ctx.font = 'bold 10px sans-serif';
-  ctx.fillText('ANIVERSARIANTES DO MÊS', card2X + 36 + boxWidth + 14, statBoxY + 24);
-  ctx.fillStyle = navyColor;
-  ctx.font = 'bold 22px monospace';
-  ctx.fillText(`${stats.birthdaysThisMonth}`, card2X + 36 + boxWidth + 14, statBoxY + 56);
-  ctx.fillStyle = grayText;
-  ctx.font = '11px sans-serif';
-  ctx.fillText('Celebrando nova idade', card2X + 36 + boxWidth + 14, statBoxY + 80);
-  ctx.fillText('Intercessão no culto dominical', card2X + 36 + boxWidth + 14, statBoxY + 98);
-
-  return canvas.toDataURL('image/png');
-}
-
-/**
- * Gera e realiza o download do relatório eclesiástico e rol de membros elaborado em PDF.
- * Inclui cabeçalho institucional, indicadores executivos (KPIs), gráficos de alta
- * resolução, resumo ministerial estatístico, destaque de aniversariantes do mês,
- * rol completo em tabela zebrada e bloco formal de homologação eclesiástica.
- *
- * @param members Lista de membros filtrados a serem exportados
+ * @param members Lista de membros a serem exportados
  * @param filterLabel Rótulo do filtro aplicado (ex: "Todos os membros", "Louvor")
- * @param options Opções adicionais de membresia e dados analíticos
+ * @param options Opções adicionais de membresia
  */
 export function exportMembersReportPDF(
   members: Member[],
   filterLabel: string,
-  options?: MembersReportExportOptions
+  _options?: MembersReportExportOptions
 ) {
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -1109,89 +860,61 @@ export function exportMembersReportPDF(
 
   // Ordena membros alfabeticamente pelo nome completo
   const sorted = [...members].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-  const allSource = options?.allMembers || members;
-
-  // Cálculos de engajamento e métricas pastorais
-  const withMinistry = sorted.filter((m) => m.ministry && m.ministry.trim() !== '' && m.ministry !== 'Nenhum').length;
-  const withoutMinistry = sorted.length - withMinistry;
-  const withPhone = sorted.filter((m) => m.phone && m.phone.trim().length >= 4).length;
-  const withAddress = sorted.filter((m) => m.address && m.address.trim().length >= 4).length;
-
-  // Aniversariantes do mês corrente
-  const currentMonth = new Date().getMonth() + 1;
-  const currentMonthName = new Date().toLocaleDateString('pt-BR', { month: 'long' });
-  const birthdaysThisMonthList = sorted
-    .filter((m) => {
-      if (!m.birthdate || m.birthdate.length < 7) return false;
-      const mMonth = Number(m.birthdate.slice(5, 7));
-      return mMonth === currentMonth;
-    })
-    .sort((a, b) => {
-      const dayA = Number(a.birthdate.slice(8, 10)) || 0;
-      const dayB = Number(b.birthdate.slice(8, 10)) || 0;
-      return dayA - dayB;
-    });
-
-  // Agrupamento por Ministério / Departamento
-  const ministryMap: Record<string, number> = {};
-  sorted.forEach((m) => {
-    const min = m.ministry && m.ministry.trim() ? m.ministry : 'Membros Gerais';
-    ministryMap[min] = (ministryMap[min] || 0) + 1;
-  });
-
-  const ministryDistribution = Object.entries(ministryMap)
-    .map(([name, count]) => ({
-      name,
-      count,
-      percentage: sorted.length > 0 ? (count / sorted.length) * 100 : 0,
-    }))
-    .sort((a, b) => b.count - a.count);
 
   // =========================================================================
   // 1. CABEÇALHO INSTITUCIONAL ELEGANTE (FAIXA AZUL MARINHO & DOURADO)
   // =========================================================================
-  const headerHeight = 24;
+  const headerHeight = 22;
   doc.setFillColor(27, 42, 74); // #1B2A4A Navy
   doc.roundedRect(margin, 12, contentWidth, headerHeight, 2, 2, 'F');
 
   // Faixa decorativa dourada
   doc.setFillColor(184, 134, 59); // #B8863B Gold
-  doc.rect(margin, 12 + headerHeight - 1.5, contentWidth, 1.5, 'F');
+  doc.rect(margin, 12 + headerHeight - 1.2, contentWidth, 1.2, 'F');
 
   // Título e Subtítulo da Igreja
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(12);
   doc.setTextColor(255, 255, 255);
-  doc.text('IGREJA EVANGÉLICA CONGREGACIONAL DE VILA KENNEDY', margin + 8, 21);
+  doc.text('IGREJA EVANGÉLICA CONGREGACIONAL DE VILA KENNEDY', margin + 7, 20);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(226, 184, 116); // Dourado claro
-  doc.text('RELATÓRIO ESTATÍSTICO & ROL GERAL DE MEMBROS', margin + 8, 27);
+  doc.text('ROL GERAL DE MEMBROS & REGISTROS ECLESIÁSTICOS', margin + 7, 26);
 
   // Identificação lateral direita
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(255, 255, 255);
-  doc.text('IECVK • OFICIAL', margin + contentWidth - 8, 22, { align: 'right' });
+  doc.text('IECVK • OFICIAL', margin + contentWidth - 7, 20.5, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(200, 210, 230);
-  doc.text('SECRETARIA GERAL & DIRETORIA', margin + contentWidth - 8, 28, { align: 'right' });
+  doc.text('SECRETARIA ECLESIÁSTICA', margin + contentWidth - 7, 26, { align: 'right' });
 
   // =========================================================================
-  // 2. BARRA DE METADADOS DO DOCUMENTO
+  // 2. BARRA DE METADADOS & RESUMO DIRETO
   // =========================================================================
-  const metaY = 42;
-  doc.setFontSize(9.5);
+  const metaY = 40;
+  doc.setFontSize(8.5);
   doc.setTextColor(27, 42, 74);
   doc.setFont('helvetica', 'bold');
-  doc.text('Filtro Aplicado: ', margin, metaY);
+  doc.text('Filtro: ', margin, metaY);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(80, 80, 80);
-  doc.text(filterLabel, margin + 28, metaY);
+  doc.text(filterLabel, margin + 12, metaY);
 
+  // Total de Membros
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(27, 42, 74);
+  doc.text('Total Listado: ', margin + 85, metaY);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text(`${sorted.length} membro${sorted.length === 1 ? '' : 's'}`, margin + 107, metaY);
+
+  // Data de Emissão
   const emissionDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -1199,235 +922,17 @@ export function exportMembersReportPDF(
   });
   doc.text(`Emissão: ${emissionDate}`, margin + contentWidth, metaY, { align: 'right' });
 
-  // Linha separadora
+  // Linha separadora sutil
   doc.setDrawColor(220, 215, 205);
   doc.setLineWidth(0.3);
   doc.line(margin, metaY + 4, margin + contentWidth, metaY + 4);
 
   // =========================================================================
-  // 3. QUADRO EXECUTIVO DE INDICADORES (KPIs EM CARDS COLORIDOS)
+  // 3. TABELA OFICIAL DO ROL DE MEMBROS (INICIA DIRETAMENTE NA PÁGINA 1)
   // =========================================================================
-  const kpiY = metaY + 8;
-  const kpiGap = 3;
-  const kpiWidth = (contentWidth - kpiGap * 3) / 4;
-  const kpiHeight = 22;
-
-  // Card 1: Total do Rol (Azul Marinho)
-  doc.setFillColor(244, 246, 249);
-  doc.setDrawColor(204, 212, 226);
-  doc.roundedRect(margin, kpiY, kpiWidth, kpiHeight, 2, 2, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(27, 42, 74);
-  doc.text('TOTAL DO ROL', margin + 5, kpiY + 6);
-
-  doc.setFontSize(12.5);
-  doc.text(`${sorted.length}`, margin + 5, kpiY + 13.5);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.setTextColor(90, 100, 115);
-  const rolPercent = allSource.length > 0 ? ((sorted.length / allSource.length) * 100).toFixed(0) : '100';
-  doc.text(`${rolPercent}% do cadastro geral`, margin + 5, kpiY + 18.5);
-
-  // Card 2: Engajamento Ministerial (Dourado)
-  const card2X = margin + kpiWidth + kpiGap;
-  doc.setFillColor(252, 248, 241);
-  doc.setDrawColor(234, 217, 185);
-  doc.roundedRect(card2X, kpiY, kpiWidth, kpiHeight, 2, 2, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(140, 95, 30);
-  doc.text('EM MINISTÉRIOS', card2X + 5, kpiY + 6);
-
-  doc.setFontSize(12.5);
-  doc.text(`${withMinistry}`, card2X + 5, kpiY + 13.5);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.setTextColor(120, 100, 75);
-  const engPercent = sorted.length > 0 ? ((withMinistry / sorted.length) * 100).toFixed(0) : '0';
-  doc.text(`${engPercent}% engajados`, card2X + 5, kpiY + 18.5);
-
-  // Card 3: Aniversariantes do Mês (Verde)
-  const card3X = card2X + kpiWidth + kpiGap;
-  doc.setFillColor(243, 247, 244);
-  doc.setDrawColor(198, 218, 203);
-  doc.roundedRect(card3X, kpiY, kpiWidth, kpiHeight, 2, 2, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(75, 102, 86);
-  doc.text('ANIVERSARIANTES', card3X + 5, kpiY + 6);
-
-  doc.setFontSize(12.5);
-  doc.text(`${birthdaysThisMonthList.length}`, card3X + 5, kpiY + 13.5);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.setTextColor(100, 115, 105);
-  doc.text(`No mês de ${currentMonthName}`, card3X + 5, kpiY + 18.5);
-
-  // Card 4: Contatos Atualizados (Terracota)
-  const card4X = card3X + kpiWidth + kpiGap;
-  doc.setFillColor(250, 244, 242);
-  doc.setDrawColor(232, 201, 193);
-  doc.roundedRect(card4X, kpiY, kpiWidth, kpiHeight, 2, 2, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(166, 67, 45);
-  doc.text('CONTATO ATIVO', card4X + 5, kpiY + 6);
-
-  doc.setFontSize(12.5);
-  const phonePercent = sorted.length > 0 ? ((withPhone / sorted.length) * 100).toFixed(0) : '0';
-  doc.text(`${phonePercent}%`, card4X + 5, kpiY + 13.5);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.setTextColor(130, 95, 90);
-  doc.text(`${withPhone} com telefone`, card4X + 5, kpiY + 18.5);
-
-  // =========================================================================
-  // 4. GRÁFICOS ANALÍTICOS INTEGRADOS EM ALTA RESOLUÇÃO (CANVAS 2X DPI)
-  // =========================================================================
-  const chartImgY = kpiY + kpiHeight + 5;
-  const chartImgHeight = 70; // mm
-
-  try {
-    const chartDataUrl = generateMembersChartsCanvas(ministryDistribution, {
-      total: sorted.length,
-      withMinistry,
-      withoutMinistry,
-      withPhone,
-      withAddress,
-      birthdaysThisMonth: birthdaysThisMonthList.length,
-    });
-
-    if (chartDataUrl) {
-      doc.addImage(chartDataUrl, 'PNG', margin, chartImgY, contentWidth, chartImgHeight);
-    }
-  } catch (err) {
-    console.warn('Não foi possível gerar os gráficos de membros no Canvas:', err);
-  }
-
-  // =========================================================================
-  // 5. QUADRO SINTÉTICO: RESUMO ESTATÍSTICO POR MINISTÉRIO
-  // =========================================================================
-  const summaryTableY = chartImgY + chartImgHeight + 5;
-
-  const ministryRows: string[][] = ministryDistribution.map((m) => [
-    m.name,
-    `${m.count} membro${m.count === 1 ? '' : 's'}`,
-    `${m.percentage.toFixed(1)}%`,
-    m.name === 'Membros Gerais' ? 'Comunhão Geral / Apoio' : 'Atuação Departamental',
-  ]);
-
-  if (ministryRows.length > 0) {
-    autoTable(doc, {
-      startY: summaryTableY,
-      head: [['Departamento / Ministério', 'Membros Ativos', '% do Rol Listado', 'Classificação']],
-      body: ministryRows,
-      styles: {
-        fontSize: 8.5,
-        cellPadding: 2,
-        textColor: [40, 40, 40],
-      },
-      headStyles: {
-        fillColor: [27, 42, 74],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        fontSize: 8.5,
-      },
-      alternateRowStyles: {
-        fillColor: [251, 249, 245],
-      },
-      columnStyles: {
-        1: { halign: 'center', fontStyle: 'bold' },
-        2: { halign: 'center' },
-      },
-      margin: { left: margin, right: margin },
-    });
-  }
-
-  // =========================================================================
-  // 6. QUADRO ESPECIAL: ANIVERSARIANTES DO MÊS ATUAL (SE HOUVER)
-  // =========================================================================
-  let nextSectionY =
-    (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || summaryTableY;
-
-  if (birthdaysThisMonthList.length > 0) {
-    if (nextSectionY + 25 > 275) {
-      doc.addPage();
-      nextSectionY = 20;
-    } else {
-      nextSectionY += 6;
-    }
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(75, 102, 86);
-    doc.text(`Aniversariantes do Mês Vigente (${currentMonthName.toUpperCase()}):`, margin, nextSectionY);
-
-    const bdayRows = birthdaysThisMonthList.map((m) => {
-      const day = m.birthdate.slice(8, 10);
-      return [
-        `Dia ${day}`,
-        m.name,
-        m.ministry || 'Membros Gerais',
-        m.phone || '—',
-        'Felicitações & Intercessão',
-      ];
-    });
-
-    autoTable(doc, {
-      startY: nextSectionY + 2.5,
-      head: [['Data', 'Nome Completo', 'Ministério', 'Contato', 'Finalidade Pastoral']],
-      body: bdayRows,
-      styles: {
-        fontSize: 8,
-        cellPadding: 1.8,
-        textColor: [35, 35, 35],
-      },
-      headStyles: {
-        fillColor: [75, 102, 86], // Verde suave
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        fontSize: 8.5,
-      },
-      alternateRowStyles: {
-        fillColor: [247, 250, 248],
-      },
-      columnStyles: {
-        0: { fontStyle: 'bold', halign: 'center', cellWidth: 22 },
-        3: { cellWidth: 28 },
-      },
-      margin: { left: margin, right: margin },
-    });
-
-    nextSectionY = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || nextSectionY;
-  }
-
-  // =========================================================================
-  // 7. ROL COMPLETO E DETALHADO DE MEMBROS (TABELA PRINCIPAL)
-  // =========================================================================
-  if (nextSectionY + 30 > 275) {
-    doc.addPage();
-    nextSectionY = 20;
-  } else {
-    nextSectionY += 6;
-  }
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(27, 42, 74);
-  doc.text('Rol Geral e Detalhamento Cadastral de Membros:', margin, nextSectionY);
-
   autoTable(doc, {
-    startY: nextSectionY + 3,
-    head: [['#', 'Nome Completo', 'Ministério', 'Contato', 'Nascimento', 'Admissão', 'Endereço / Bairro']],
+    startY: metaY + 8,
+    head: [['#', 'Nome Completo', 'Ministério', 'Telefone / WhatsApp', 'Nascimento', 'Admissão', 'Endereço']],
     body: sorted.map((m, idx) => [
       String(idx + 1).padStart(2, '0'),
       m.name,
@@ -1439,19 +944,20 @@ export function exportMembersReportPDF(
     ]),
     foot: [
       [
-        'TOTAL DE MEMBROS LISTADOS',
-        `${sorted.length} membro(s) cadastrado(s)`,
+        '',
+        `Total: ${sorted.length} membro(s)`,
         '',
         '',
         '',
         '',
-        `IECVK • Rol Oficial`,
+        'IECVK • Secretaria',
       ],
     ],
     styles: {
       fontSize: 8,
-      cellPadding: 2,
+      cellPadding: 2.2,
       textColor: [30, 30, 30],
+      valign: 'middle',
     },
     headStyles: {
       fillColor: [27, 42, 74],
@@ -1463,7 +969,7 @@ export function exportMembersReportPDF(
       fillColor: [240, 237, 230],
       textColor: [27, 42, 74],
       fontStyle: 'bold',
-      fontSize: 8.5,
+      fontSize: 8,
     },
     alternateRowStyles: {
       fillColor: [251, 249, 245],
@@ -1472,64 +978,65 @@ export function exportMembersReportPDF(
       0: { halign: 'center', fontStyle: 'bold', cellWidth: 10 },
       1: { fontStyle: 'bold' },
       2: { cellWidth: 26 },
-      3: { cellWidth: 26 },
+      3: { cellWidth: 28 },
       4: { halign: 'center', cellWidth: 22 },
       5: { halign: 'center', cellWidth: 22 },
+      6: { cellWidth: 36 },
     },
     margin: { left: margin, right: margin },
   });
 
   // Mensagem se a lista de membros estiver vazia
   if (sorted.length === 0) {
-    const emptyY = nextSectionY + 12;
-    doc.setFontSize(10);
+    const emptyY = metaY + 16;
+    doc.setFontSize(9.5);
     doc.setTextColor(120);
     doc.text('Nenhum membro registrado para este filtro.', margin, emptyY);
   }
 
   // =========================================================================
-  // 8. BLOCO FORMAL DE HOMOLOGAÇÃO ECLESIÁSTICA E ASSINATURAS
+  // 4. TERMO DE HOMOLOGAÇÃO E ASSINATURAS
   // =========================================================================
   let finalTableY =
-    (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || nextSectionY + 20;
+    (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || metaY + 30;
 
-  // Se o espaço restante na página for insuficiente (~48mm), quebra para nova página
-  if (finalTableY + 48 > 275) {
+  // Se o espaço restante na página for insuficiente (~38mm), adiciona nova página
+  if (finalTableY + 38 > 275) {
     doc.addPage();
     finalTableY = 20;
   }
 
-  const signBlockY = finalTableY + 12;
+  const signBlockY = finalTableY + 10;
 
   // Declaração formal eclesiástica
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(80, 80, 80);
+  doc.setTextColor(85, 85, 85);
   doc.text(
-    `Certifico para os devidos fins eclesiásticos e estatutários que o presente rol reflete fielmente os registros do livro de membros desta congregação.`,
+    `Certifico para os devidos fins que o presente rol confere com os registros do Livro de Membros desta congregação.`,
     margin,
     signBlockY
   );
 
-  const signLineY = signBlockY + 18;
-  const colWidth = contentWidth / 3;
+  const signLineY = signBlockY + 14;
+  const colWidth = contentWidth / 2;
 
   // Assinatura 1: Secretaria Geral
   doc.setDrawColor(180);
   doc.setLineWidth(0.4);
-  doc.line(margin + 4, signLineY, margin + colWidth - 8, signLineY);
+  doc.line(margin + 8, signLineY, margin + colWidth - 16, signLineY);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(27, 42, 74);
-  doc.text('Secretaria Geral', margin + colWidth / 2 - 2, signLineY + 4, { align: 'center' });
+  doc.text('Secretaria Eclesiástica', margin + colWidth / 2 - 4, signLineY + 4, { align: 'center' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(120);
-  doc.text('Lavratura e Rol de Membros', margin + colWidth / 2 - 2, signLineY + 7.5, { align: 'center' });
+  doc.text('Registro e Atualização do Rol', margin + colWidth / 2 - 4, signLineY + 7.5, { align: 'center' });
 
   // Assinatura 2: Pastor Titular / Liderança
   const col2Center = margin + colWidth + colWidth / 2;
-  doc.line(margin + colWidth + 4, signLineY, margin + colWidth * 2 - 8, signLineY);
+  doc.line(margin + colWidth + 8, signLineY, margin + contentWidth - 8, signLineY);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(27, 42, 74);
@@ -1537,22 +1044,10 @@ export function exportMembersReportPDF(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(120);
-  doc.text('Homologação Pastoral', col2Center, signLineY + 7.5, { align: 'center' });
-
-  // Assinatura 3: Conselho de Presbíteros / Diretoria
-  const col3Center = margin + colWidth * 2 + colWidth / 2;
-  doc.line(margin + colWidth * 2 + 4, signLineY, margin + contentWidth - 4, signLineY);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(27, 42, 74);
-  doc.text('Conselho de Presbíteros / Diretoria', col3Center, signLineY + 4, { align: 'center' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.setTextColor(120);
-  doc.text('Aprovação Estatutária', col3Center, signLineY + 7.5, { align: 'center' });
+  doc.text('Visto e Homologação Pastoral', col2Center, signLineY + 7.5, { align: 'center' });
 
   // =========================================================================
-  // 9. RODAPÉ INSTITUCIONAL UNIFICADO EM TODAS AS PÁGINAS
+  // 5. RODAPÉ INSTITUCIONAL UNIFICADO EM TODAS AS PÁGINAS
   // =========================================================================
   const totalPages = doc.getNumberOfPages();
 
